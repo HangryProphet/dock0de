@@ -1,0 +1,14 @@
+{
+  "name": "dock0de",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.5.0",
+    "prisma": "^7.5.0"
+  }
+}

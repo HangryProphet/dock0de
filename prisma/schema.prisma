@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum UserRole {
+  STUDENT
+  PROFESSOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum SubmissionStatus {
+  PENDING
+  UPLOADING
+  QUEUED
+  BUILDING
+  RUNNING
+  SUCCESS
+  FAILED
+  TIMEOUT
+  CANCELED
+}
+
+enum Environment {
+  NODE
+  REACT
+  JAVA
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+model User {
+  id                String        @id @default(cuid())
+  email             String        @unique
+  passwordHash      String
+  role              UserRole
+  status            AccountStatus @default(ACTIVE)
+  displayName       String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Auth security
+  passwordResetToken     String?   @unique
+  passwordResetExpiresAt DateTime?
+  otpCode                String?
+  otpExpiresAt           DateTime?
+  lastLoginAt            DateTime?
+
+  submissions       Submission[]
+  auditLogs         AuditLog[]
+}
+
+model Submission {
+  id                 String            @id @default(cuid())
+  userId             String
+  environment        Environment
+  status             SubmissionStatus  @default(PENDING)
+  assignmentName     String
+  zipPath            String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  // Container runtime
+  containerId        String?
+  imageId            String?
+  hostPort           Int?
+  startedAt          DateTime?
+  finishedAt         DateTime?
+  timeoutSeconds     Int               @default(300)
+
+  // Metrics and health
+  exitCode           Int?
+  cpuUsagePercent    Float?
+  memoryUsageMb      Float?
+  healthScore        Int?
+
+  // Relations
+  user               User              @relation(fields: [userId], references: [id])
+  auditReport        AuditReport?
+  systemLogs         SystemLog[]
+  auditLogs          AuditLog[]
+}
+
+model AuditReport {
+  id                 String   @id @default(cuid())
+  submissionId       String   @unique
+  eslintIssues       Int      @default(0)
+  snykIssues         Int      @default(0)
+  summary            String
+  createdAt          DateTime @default(now())
+
+  submission         Submission @relation(fields: [submissionId], references: [id])
+}
+
+model SystemLog {
+  id                 String   @id @default(cuid())
+  submissionId       String
+  level              LogLevel @default(INFO)
+  message            String
+  createdAt          DateTime @default(now())
+
+  submission         Submission @relation(fields: [submissionId], references: [id])
+}
+
+model AuditLog {
+  id                 String   @id @default(cuid())
+  userId             String
+  submissionId       String
+  action             String
+  ipAddress          String?
+  userAgent          String?
+  createdAt          DateTime @default(now())
+
+  user               User        @relation(fields: [userId], references: [id])
+  submission         Submission  @relation(fields: [submissionId], references: [id])
+}
