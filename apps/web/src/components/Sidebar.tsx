@@ -1,37 +1,72 @@
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Accordion, Text } from "@mantine/core";
-import type { UserRole } from "../data/mockData";
-import { mockData } from "../data/mockData";
+import type { ClassInfo, UserRole } from "../data/api";
+import { fetchProfessorClasses, fetchStudentClasses } from "../data/api";
 
-const studentLinks = [
-  { label: "Dashboard", to: "/student" },
+type NavItem = {
+  label: string;
+  to: string;
+  icon: "dashboard" | "sandbox";
+};
+
+const studentLinks: NavItem[] = [
+  { label: "Dashboard", to: "/student", icon: "dashboard" },
 ];
 
-const professorLinks = [
-  { label: "Dashboard", to: "/professor" },
-  { label: "Sandbox", to: "/sandbox" },
+const professorLinks: NavItem[] = [
+  { label: "Dashboard", to: "/professor", icon: "dashboard" },
+  { label: "Sandbox", to: "/sandbox", icon: "sandbox" },
 ];
 
 type SidebarProps = {
   role: UserRole;
+  userId?: string | null;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
-export function Sidebar({ role }: SidebarProps) {
+function NavIcon({ name }: { name: NavItem["icon"] }) {
+  if (name === "sandbox") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M9 3h6l1 4h3v2h-2.4l-2 10.5a2 2 0 0 1-2 1.5h-1.2a2 2 0 0 1-2-1.5L7.4 9H5V7h3l1-4zm2.6 16h.8l1.8-10H9.8l1.8 10z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+export function Sidebar({ role, userId, collapsed, onToggleCollapse }: SidebarProps) {
   const location = useLocation();
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
   const links = role === "PROFESSOR" ? professorLinks : studentLinks;
 
-  const classIds =
-    role === "PROFESSOR"
-      ? mockData.classes.map((item) => item.id)
-      : mockData.studentEnrollments.map((item) => item.classId);
+  useEffect(() => {
+    if (!userId) return;
+    const fetcher = role === "PROFESSOR" ? fetchProfessorClasses : fetchStudentClasses;
+    fetcher(userId)
+      .then(setClasses)
+      .catch(() => setClasses([]));
+  }, [role, userId]);
 
-  const classes = mockData.classes.filter((item) => classIds.includes(item.id));
-
-  const grouped = classes.reduce<Record<string, typeof classes>>((acc, item) => {
-    acc[item.yearLevel] = acc[item.yearLevel] ?? [];
-    acc[item.yearLevel].push(item);
-    return acc;
-  }, {});
+  const grouped = useMemo(() =>
+    classes.reduce<Record<string, ClassInfo[]>>((acc, item) => {
+      acc[item.yearLevel] = acc[item.yearLevel] ?? [];
+      acc[item.yearLevel].push(item);
+      return acc;
+    }, {}), [classes]);
 
   const yearLabels: Record<string, string> = {
     YEAR_1: "1st Year",
@@ -41,12 +76,21 @@ export function Sidebar({ role }: SidebarProps) {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? " is-collapsed" : ""}`}>
       <div className="sidebar-header">
-        <Text fw={700}>Dock0de</Text>
-        <Text size="xs" c="dimmed">
-          {role === "PROFESSOR" ? "Professor" : "Student"} view
-        </Text>
+        <div className="sidebar-brand">
+          <Text fw={700}>Dock0de</Text>
+          <Text size="xs" c="dimmed">
+            {role === "PROFESSOR" ? "Professor" : "Student"} view
+          </Text>
+        </div>
+        <button
+          type="button"
+          className="sidebar-toggle"
+          onClick={onToggleCollapse}
+        >
+          {collapsed ? ">>" : "<<"}
+        </button>
       </div>
       <nav className="sidebar-nav">
         {links.map((link) => (
@@ -57,10 +101,13 @@ export function Sidebar({ role }: SidebarProps) {
               `sidebar-link${isActive ? " is-active" : ""}`
             }
           >
-            {link.label}
+            <span className="sidebar-link-icon">
+              <NavIcon name={link.icon} />
+            </span>
+            <span className="sidebar-link-label">{link.label}</span>
           </NavLink>
         ))}
-        {role === "PROFESSOR" ? (
+        {role === "PROFESSOR" && !collapsed ? (
           <Accordion className="sidebar-accordion" chevronPosition="right">
             {Object.entries(grouped).map(([yearLevel, items]) => (
               <Accordion.Item key={yearLevel} value={yearLevel}>
@@ -83,7 +130,7 @@ export function Sidebar({ role }: SidebarProps) {
               </Accordion.Item>
             ))}
           </Accordion>
-        ) : (
+        ) : !collapsed ? (
           <div className="sidebar-accordion">
             <Text size="xs" c="dimmed" className="sidebar-section-title">
               My Classes
@@ -104,7 +151,7 @@ export function Sidebar({ role }: SidebarProps) {
               })}
             </div>
           </div>
-        )}
+        ) : null}
       </nav>
     </aside>
   );

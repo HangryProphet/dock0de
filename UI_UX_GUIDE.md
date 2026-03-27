@@ -6,7 +6,7 @@
 - Flat surfaces with subtle 1px borders; avoid heavy shadows.
 - High contrast text on crisp surfaces; only one accent color.
 - Generous rounding on cards, inputs, and buttons.
-- No gradient backgrounds, no gradient text, no glow effects.
+- No heavy gradients or glow effects; allow subtle theme textures in Cyber/Glass.
 
 ## Color Palette
 Base (Light)
@@ -42,17 +42,17 @@ Type Scale (Desktop)
 - H1: 24px, 700, -0.01em
 - H2: 20px, 600, -0.01em
 - H3: 16px, 600, 0
-- Body: 14px, 500, 0
-- Small: 12px, 500, 0
-- Micro: 11px, 500, 0.01em
+- Body: 15px, 500, 0
+- Small: 13px, 500, 0
+- Micro: 12px, 500, 0.01em
 
 Type Scale (Mobile)
 - Display / KPI: 28px
 - H1: 22px
 - H2: 18px
 - H3: 15px
-- Body: 14px
-- Small: 12px
+- Body: 15px
+- Small: 13px
 
 ## Layout Structure
 Dashboard
@@ -66,6 +66,56 @@ Sidebar (Role-Based Navigation)
 - Student: Flat "My Classes" list with year/section in the label.
 - Remove global Upload links; use contextual actions inside pages.
 
+Theme Selector (User-Selectable Skins)
+- Allow users to switch between four UI styles: Default, Cyber, Glass, Command.
+- Theme selector lives in the top header and persists per user/device.
+- All surfaces, borders, text, badges, buttons, tables, and modals must inherit theme variables.
+
+Theme Profiles (Detailed Specs)
+
+Default (Light Minimal)
+- Purpose: clean baseline with calm, light surfaces.
+- Background: #F7F7F5.
+- Surface: #FFFFFF, Surface Alt: #F2F2EE, Border: #E5E5E0.
+- Text: #111111, Secondary: #5E5E5E, Muted: #8A8A8A.
+- Accent: #2E3A8C (deep indigo). Accent Subtle: #E9ECFB.
+- Terminal: #151B23 background, #F2F5F9 text.
+
+Cyber (Dark/Neon Console)
+- Purpose: high-tech, dense, operations-console vibe.
+- Background: #0C1117 with subtle grid/scanline texture.
+- Surface: #121A24, Surface Alt: #0F1621, Border: #1F2A38.
+- Text: #E6F0FF, Secondary: #9BB0C9, Muted: #6F87A5.
+- Accent: #35F2C2 (neon green). Use for active nav, tab underline, badges.
+- Terminal: #0A0F16 background, #D7F9F1 text.
+- Buttons: primary uses Accent with dark text for contrast; outline uses Accent border + text.
+- Badges: use Accent for counts and highlight states; warning uses amber #FFC840.
+- Tables: headers and rows use Text color; borders stay low-contrast to reduce noise.
+- Effects: no glow, but allow 1px accent edge for active items.
+
+Glass (Layered/Blur)
+- Purpose: modern, glassy, layered depth without glow.
+- Background: #0F141B with soft multi-radial gradients.
+- Surface: rgba(255,255,255,0.08) with 16px blur; Surface Alt: rgba(255,255,255,0.04).
+- Border: rgba(255,255,255,0.16).
+- Text: #F2F5F9, Secondary: #B7C1CF, Muted: #8A97A8.
+- Accent: #6E7CFF (light blue). Use for active nav, tab underline, badges.
+- Terminal: rgba(10,14,20,0.80) background, #E9EDF6 text.
+- Buttons: primary uses Accent with dark text for contrast; outline uses Accent border + text.
+- Badges: use Accent for counts; warning uses #FFC882; error uses #FF7893.
+- Modals: must use blurred surface and inherit theme colors (no white modal).
+
+Command (Analytic Command Center)
+- Purpose: data-heavy, engineered, high-legibility.
+- Background: #F2F4F8.
+- Surface: #FFFFFF, Surface Alt: #EEF1F6, Border: #D7DCE6.
+- Text: #0F172A, Secondary: #475569, Muted: #64748B.
+- Accent: #1F3B8B (navy). Use for active nav, tab underline, badges.
+- Terminal: #0F172A background, #E2E8F0 text.
+- Buttons: primary uses Accent with white text; outline uses Accent border + text.
+- Badges: use Accent for counts; success uses #EAF7EF text #1B6A3A.
+- Tables: stronger header contrast and consistent 1px borders for readability.
+
 Horizontal Tabs (Teams-Style)
 - Height: 48px, full-width.
 - 1px bottom border (#E5E5E0).
@@ -78,10 +128,9 @@ Main Content
 - Right rail (optional) for quick actions and status.
 
 Submission Matrix (Activity Archive)
-- Grid layout: rows = students, columns = activity tasks or runs.
-- Each cell is a 24-32px rounded square with 1px border.
-- Status color uses muted fills (Success, Warning, Error) with 70% opacity.
-- Tooltip on hover for run details (timestamp, health score).
+- Columnar table layout with headers: Student, Score, Date Submitted, Environment, Status.
+- Status pill text uses labels: GRADED, PENDING REVIEW, NO SUBMISSION.
+- Status colors use muted fills from Success/Warning/Error theme tokens.
 
 Dock Layout (Live Preview Workspace)
 - Split pane: 60/40 horizontal on desktop, stacked on mobile.

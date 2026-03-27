@@ -1,63 +1,112 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Badge, Card, Group, Text, Title } from "@mantine/core";
-import { mockData } from "../data/mockData";
-
-const statusColor: Record<string, string> = {
-  SUCCESS: "green",
-  FAILED: "red",
-  PENDING: "yellow",
-  RUNNING: "blue",
-};
+import { Button, Card, Group, Text, Title, Pagination } from "@mantine/core";
+import { fetchActivityMatrix } from "../data/api";
+import type { ActivityMatrix } from "../data/api";
 
 export function SubmissionMatrix() {
   const navigate = useNavigate();
   const { activityId } = useParams<{ activityId: string }>();
-  const matrix = mockData.activityMatrix[activityId ?? "act_1"];
+  const [matrix, setMatrix] = useState<ActivityMatrix | null>(null);
+
+  useEffect(() => {
+    if (!activityId) return;
+    fetchActivityMatrix(activityId)
+      .then(setMatrix)
+      .catch(() => setMatrix(null));
+  }, [activityId]);
+
+  const rows = matrix?.rows ?? [];
 
   return (
     <div className="page-grid">
       <Card withBorder radius="lg" className="table-card">
         <Group justify="space-between" align="center" mb="md">
           <div>
-            <Title order={3}>Submission Matrix</Title>
+            <Title order={3}>{matrix?.activityTitle ?? "Submissions"}</Title>
             <Text c="dimmed" size="sm">
-              Student activity health overview.
+              Submissions
             </Text>
           </div>
-          <Group gap="sm">
-            <Badge color="green" variant="light">
-              Success
-            </Badge>
-            <Badge color="yellow" variant="light">
-              Warning
-            </Badge>
-            <Badge color="red" variant="light">
-              Error
-            </Badge>
-          </Group>
+          <Button
+            variant="outline"
+            color="brand"
+            radius="lg"
+            size="xs"
+            onClick={() =>
+              matrix?.classId
+                ? navigate(`/professor/class/${matrix.classId}`)
+                : navigate(-1)
+            }
+          >
+            Back to Class
+          </Button>
         </Group>
         <div className="matrix">
-          {matrix.rows.map((row) => (
+          <div className="matrix-head">
+            <Text size="xs" c="dimmed">
+              Student
+            </Text>
+            <Text size="xs" c="dimmed">
+              Score
+            </Text>
+            <Text size="xs" c="dimmed">
+              Date Submitted
+            </Text>
+            <Text size="xs" c="dimmed">
+              Environment
+            </Text>
+            <Text size="xs" c="dimmed">
+              Status
+            </Text>
+          </div>
+          {rows.map((row) => (
             <div key={row.studentId} className="matrix-row">
-              <div className="matrix-student">
-                <Text fw={600}>{row.studentName}</Text>
-                <Text size="xs" c="dimmed">
-                  Last health: {row.lastHealthScore}
-                </Text>
-              </div>
-              <div className="matrix-cells">
+              <Text fw={600}>{row.studentName}</Text>
+              <Text fw={600}>
+                {row.cells[0]?.healthScore ?? "-"}
+              </Text>
+              <Text fw={600}>
+                {row.cells[0]?.submittedAt
+                  ? row.cells[0].submittedAt.slice(0, 10)
+                  : "-"}
+              </Text>
+              <Text fw={600}>
+                {row.cells[0]?.environment ?? "-"}
+              </Text>
+              <div className="matrix-status">
                 {row.cells.map((cell) => (
                   <button
-                    key={cell.submissionId}
+                    key={cell.submissionId ?? `${row.studentId}-missing`}
                     className={`matrix-cell status-${cell.status.toLowerCase()}`}
-                    title={`Score ${cell.healthScore}`}
-                    onClick={() => navigate(`/dock/${cell.submissionId}`)}
-                  />
+                    title={
+                      cell.status === "MISSING"
+                        ? "NO SUBMISSION"
+                        : `Score ${cell.healthScore ?? "-"}`
+                    }
+                    onClick={() =>
+                      cell.submissionId ? navigate(`/dock/${cell.submissionId}`) : undefined
+                    }
+                    disabled={!cell.submissionId}
+                  >
+                    <span>
+                      {cell.status === "PENDING"
+                        ? "PENDING REVIEW"
+                        : cell.status === "MISSING"
+                          ? "NO SUBMISSION"
+                          : cell.status === "SUCCESS"
+                            ? "GRADED"
+                            : cell.status}
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>
           ))}
         </div>
+        <Group justify="flex-end" mt="md">
+          <Pagination total={1} size="sm" radius="md" />
+        </Group>
       </Card>
     </div>
   );

@@ -22,6 +22,10 @@ export function DockPage() {
   const timelineItem = mockData.studentTimeline.find(
     (item) => item.submissionId === id
   );
+  const activity = mockData.activities.find(
+    (item) => item.id === timelineItem?.activityId
+  );
+  const maxScore = activity?.maxScore ?? 100;
   const [score, setScore] = useState(
     timelineItem?.professorScore ? String(timelineItem.professorScore) : ""
   );
@@ -85,14 +89,14 @@ export function DockPage() {
             <Group justify="space-between" align="center">
               <div className="action-fields">
                 <Text size="xs" c="dimmed">
-                  Professor Score
+                  Score / {maxScore}
                 </Text>
                 <input
                   className="score-input"
                   inputMode="numeric"
                   value={score}
                   onChange={(event) => setScore(event.currentTarget.value)}
-                  placeholder="0-100"
+                  placeholder={`0-${maxScore}`}
                 />
               </div>
               <Textarea

@@ -66,12 +66,16 @@ Visual Layout
 Core Components
 - Tabs: [Metrics], [Activities], [Students].
 - Metrics tab: completion rate, top 3 ESLint errors, running containers.
-- Activities tab: activity list and "Create Activity" primary button.
+- Activities tab: activity list with Max Score + Action column and "Create Activity" primary button.
 - Students tab: roster table with status badges.
 
 Interaction Logic
 - Tabs switch within the same route (no sidebar changes).
-- Activities tab "Create Activity" opens modal with Title, Description, Due Date.
+- Activities tab "Create Activity" opens modal with Title, Description, Due Date, Max Score.
+
+Theme Selector Behavior
+- Users can switch between four UI styles (Default, Cyber, Glass, Command) from the header.
+- Modals, cards, badges, and tables must reflect the active theme.
 
 Data Requirements
 - GET /professor/classes/:id/metrics
@@ -94,12 +98,10 @@ Data Requirements
 
 ## 6. Submission Matrix (/professor/class/:id/activities/:activityId)
 Visual Layout
-- Matrix grid where rows are students and columns are attempts.
+- Columnar submissions table with headers: Student, Score, Date Submitted, Environment, Status.
 
 Core Components
-- Matrix legend: Success/Warning/Error.
-- Row header with student name and last health score.
-- Cell tooltip showing status, timestamp, and health score.
+- Status pill per row with labels: GRADED, PENDING REVIEW, NO SUBMISSION.
 
 Interaction Logic
 - Clicking a cell opens /dock/:submissionId.

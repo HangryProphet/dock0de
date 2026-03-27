@@ -35,6 +35,7 @@ type ActivityInfo = {
   classId: string;
   title: string;
   dueAt: string;
+  maxScore: number;
   submissionCount: number;
   healthAvg: number;
 };
@@ -56,9 +57,11 @@ type MatrixRow = {
   studentName: string;
   lastHealthScore: number;
   cells: {
-    submissionId: string;
-    status: SubmissionStatus;
-    healthScore: number;
+    submissionId?: string;
+    status: SubmissionStatus | "MISSING";
+    healthScore?: number;
+    submittedAt?: string;
+    environment?: Environment;
   }[];
 };
 
@@ -69,6 +72,7 @@ type SandboxRun = {
   activityTitle: string;
   status: SubmissionStatus;
   submissionId: string;
+  isTestRun: boolean;
 };
 
 type RosterEntry = {
@@ -137,6 +141,7 @@ export const mockData = {
       classId: "class_1",
       title: "Week 3 Lab",
       dueAt: "2026-03-28T12:00:00.000Z",
+      maxScore: 100,
       submissionCount: 22,
       healthAvg: 86,
     },
@@ -145,6 +150,7 @@ export const mockData = {
       classId: "class_1",
       title: "Week 4 API",
       dueAt: "2026-04-05T12:00:00.000Z",
+      maxScore: 100,
       submissionCount: 18,
       healthAvg: 82,
     },
@@ -153,6 +159,7 @@ export const mockData = {
       classId: "class_1",
       title: "Week 5 React",
       dueAt: "2026-04-12T12:00:00.000Z",
+      maxScore: 100,
       submissionCount: 10,
       healthAvg: 79,
     },
@@ -161,6 +168,7 @@ export const mockData = {
       classId: "class_2",
       title: "Week 2 CLI",
       dueAt: "2026-03-26T12:00:00.000Z",
+      maxScore: 100,
       submissionCount: 20,
       healthAvg: 88,
     },
@@ -234,6 +242,8 @@ export const mockData = {
               submissionId: "sub_123",
               status: "SUCCESS" as SubmissionStatus,
               healthScore: 87,
+              submittedAt: "2026-03-27T09:12:00.000Z",
+              environment: "REACT",
             },
           ],
         },
@@ -245,7 +255,8 @@ export const mockData = {
             {
               submissionId: "sub_126",
               status: "PENDING" as SubmissionStatus,
-              healthScore: 72,
+              submittedAt: "2026-03-27T10:05:00.000Z",
+              environment: "NODE",
             },
           ],
         },
@@ -275,6 +286,7 @@ export const mockData = {
       activityTitle: "Week 3 Lab",
       status: "SUCCESS" as SubmissionStatus,
       submissionId: "sub_123",
+      isTestRun: true,
     },
     {
       id: "sb_2",
@@ -283,6 +295,7 @@ export const mockData = {
       activityTitle: "Week 3 Lab",
       status: "PENDING" as SubmissionStatus,
       submissionId: "sub_126",
+      isTestRun: true,
     },
     {
       id: "sb_3",
@@ -291,6 +304,7 @@ export const mockData = {
       activityTitle: "Week 2 CLI",
       status: "FAILED" as SubmissionStatus,
       submissionId: "sub_124",
+      isTestRun: true,
     },
   ] as SandboxRun[],
   auditReports: {

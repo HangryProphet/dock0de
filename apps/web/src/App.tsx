@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./layouts/AppLayout";
 import { AuthPage } from "./pages/AuthPage";
+import { LandingPage } from "./pages/LandingPage";
 import { StudentDashboard } from "./pages/StudentDashboard";
 import { ProfessorDashboard } from "./pages/ProfessorDashboard";
 import { DockPage } from "./pages/DockPage";
@@ -12,9 +13,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/student" replace />} />
+          <Route path="/app" element={<Navigate to="/student" replace />} />
           <Route path="/student" element={<StudentDashboard />} />
           <Route path="/professor" element={<ProfessorDashboard />} />
           <Route path="/sandbox" element={<SandboxPage />} />

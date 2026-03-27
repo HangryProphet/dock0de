@@ -52,8 +52,14 @@ Dock0de is a class- and activity-based code execution sandbox for IT professors.
 16. Backend cleans temp files and marks the run complete in the database.
 
 ## Navigation Model (Teams-Style Tabs)
-- Professor Dashboard -> Class View (tabs: Metrics, Activities, Students) -> Dock
+- Professor Dashboard -> Class View (tabs: Metrics, Activities, Students) -> Activity Submissions -> Dock
 - Contextual actions replace global uploads to reduce sidebar clutter.
+
+## Activity-First Flow Notes
+- Activities open a full roster submissions view for that assignment.
+- Submissions list shows Student, Score, Date Submitted, Environment, Status.
+- Status labels: GRADED, PENDING REVIEW, NO SUBMISSION.
+- Dock grading bar shows Score / Max Score from the Activity.
 
 ## Proposed Folder Structure
 Monorepo structure (recommended):

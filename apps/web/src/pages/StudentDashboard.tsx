@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import {
   Badge,
   Button,
@@ -12,7 +12,12 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { mockData } from "../data/mockData";
+import type { LayoutContext } from "../layouts/AppLayout";
+import {
+  fetchStudentActivities,
+  fetchStudentClasses,
+} from "../data/api";
+import type { ClassInfo, TimelineItem } from "../data/api";
 
 const statusColor: Record<string, string> = {
   SUCCESS: "green",
@@ -23,24 +28,40 @@ const statusColor: Record<string, string> = {
 
 export function StudentDashboard() {
   const navigate = useNavigate();
+  const { user } = useOutletContext<LayoutContext>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const enrolledClassIds = mockData.studentEnrollments.map((item) => item.classId);
-  const classes = mockData.classes.filter((item) => enrolledClassIds.includes(item.id));
-  const selectedClassId = searchParams.get("classId") ?? classes[0]?.id;
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const selectedClassId = searchParams.get("classId") ?? classes[0]?.id ?? "";
   const selectedClass = classes.find((item) => item.id === selectedClassId);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitActivity, setSubmitActivity] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [environment, setEnvironment] = useState<string | null>(null);
 
-  const submitActivityInfo = mockData.activities.find(
-    (activity) => activity.id === submitActivity
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchStudentClasses(user.id)
+      .then(setClasses)
+      .catch(() => setClasses([]));
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !selectedClassId) return;
+    fetchStudentActivities(selectedClassId, user.id)
+      .then(setTimeline)
+      .catch(() => setTimeline([]));
+  }, [selectedClassId, user?.id]);
+
+  const submitActivityInfo = useMemo(
+    () => timeline.find((activity) => activity.activityId === submitActivity),
+    [timeline, submitActivity]
   );
 
-  const timeline = useMemo(() => {
-    if (!selectedClassId) return [];
-    return mockData.studentTimeline.filter((item) => item.classId === selectedClassId);
-  }, [selectedClassId]);
+  const pendingGrades = useMemo(
+    () => timeline.filter((item) => item.status === "PENDING").length,
+    [timeline]
+  );
 
   return (
     <div className="page-grid">
@@ -84,7 +105,7 @@ export function StudentDashboard() {
             </Text>
           </div>
           <Badge variant="light" color="brand">
-            {mockData.studentMetrics.pendingGrades} pending grades
+            {pendingGrades} pending grades
           </Badge>
         </Group>
         <div className="timeline">
@@ -172,7 +193,11 @@ export function StudentDashboard() {
           <Select
             label="Environment"
             placeholder="Select runtime"
-            data={mockData.environments}
+            data={[
+              { value: "REACT", label: "React/Vite" },
+              { value: "NODE", label: "Node.js" },
+              { value: "JAVA", label: "Java" },
+            ]}
             value={environment}
             onChange={setEnvironment}
             radius="md"

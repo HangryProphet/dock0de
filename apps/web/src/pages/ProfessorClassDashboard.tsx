@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import {
   Badge,
   Button,
   Card,
   Group,
   Modal,
+  NumberInput,
+  Pagination,
   Select,
   Stack,
   Tabs,
@@ -14,23 +16,58 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
-import { mockData } from "../data/mockData";
+import {
+  fetchClassActivities,
+  fetchClassStudents,
+  fetchProfessorClasses,
+} from "../data/api";
+import type { ActivityInfo, ClassInfo, RosterEntry } from "../data/api";
+import type { LayoutContext } from "../layouts/AppLayout";
 
 export function ProfessorClassDashboard() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const classInfo = mockData.classes.find((item) => item.id === id) ?? mockData.classes[0];
-  const metrics = mockData.classMetrics[classInfo.id];
+  const { user } = useOutletContext<LayoutContext>();
   const [tab, setTab] = useState<string | null>("metrics");
   const [modalOpen, setModalOpen] = useState(false);
   const [activityQuery, setActivityQuery] = useState("");
   const [studentQuery, setStudentQuery] = useState("");
   const [studentStatus, setStudentStatus] = useState<string | null>(null);
-  const activities = useMemo(
-    () => mockData.activities.filter((item) => item.classId === classInfo.id),
-    [classInfo.id]
-  );
-  const roster = mockData.classRoster[classInfo.id] ?? [];
+  const [classInfo, setClassInfo] = useState<ClassInfo | null>(null);
+  const [activities, setActivities] = useState<ActivityInfo[]>([]);
+  const [roster, setRoster] = useState<RosterEntry[]>([]);
+  const classId = id ?? classInfo?.id ?? "";
+
+  useEffect(() => {
+    if (!id) return;
+    fetchProfessorClasses(user?.id)
+      .then((items) => {
+        const found = items.find((item) => item.id === id) ?? items[0] ?? null;
+        setClassInfo(found);
+      })
+      .catch(() => setClassInfo(null));
+  }, [id, user?.id]);
+
+  useEffect(() => {
+    if (!id) return;
+    fetchClassActivities(id)
+      .then(setActivities)
+      .catch(() => setActivities([]));
+    fetchClassStudents(id)
+      .then(setRoster)
+      .catch(() => setRoster([]));
+  }, [id]);
+
+  const completionRate = useMemo(() => {
+    if (!classInfo || activities.length === 0) return 0;
+    const totalSlots = classInfo.studentCount * activities.length;
+    if (totalSlots === 0) return 0;
+    const totalSubmissions = activities.reduce(
+      (sum, item) => sum + item.submissionCount,
+      0
+    );
+    return totalSubmissions / totalSlots;
+  }, [activities, classInfo]);
 
   const filteredActivities = useMemo(() => {
     return activities.filter((item) =>
@@ -54,15 +91,26 @@ export function ProfessorClassDashboard() {
         <Group justify="space-between" align="center">
           <div>
             <Title order={2}>
-              {classInfo.name} {classInfo.section}
+              {classInfo?.name ?? "Class"} {classInfo?.section ?? ""}
             </Title>
             <Text size="sm" c="dimmed">
-              {classInfo.yearLevel.replace("YEAR_", "Year ")} class
+              {classInfo?.yearLevel ? classInfo.yearLevel.replace("YEAR_", "Year ") : ""} class
             </Text>
           </div>
-          <Badge color="brand" variant="light">
-            Invite Code: {classInfo.inviteCode}
-          </Badge>
+          <Group gap="sm">
+            <Badge color="brand" variant="light">
+              Invite Code: {classInfo?.inviteCode ?? ""}
+            </Badge>
+            <Button
+              size="xs"
+              variant="outline"
+              color="brand"
+              radius="lg"
+              onClick={() => navigate("/professor")}
+            >
+              Back to Classes
+            </Button>
+          </Group>
         </Group>
       </Card>
 
@@ -81,8 +129,8 @@ export function ProfessorClassDashboard() {
                   <Text c="dimmed" size="sm">
                     Completion Rate
                   </Text>
-                  <Title order={1}>{Math.round(metrics.completionRate * 100)}%</Title>
-                  <Text size="sm">Based on latest activity submissions.</Text>
+                  <Title order={1}>{Math.round(completionRate * 100)}%</Title>
+                  <Text size="sm">Based on total submissions.</Text>
                 </Stack>
               </Card>
               <Card withBorder radius="lg" className="kpi-card">
@@ -91,11 +139,7 @@ export function ProfessorClassDashboard() {
                     Top ESLint Errors
                   </Text>
                   <div className="metric-list">
-                    {metrics.topEslintErrors.map((item) => (
-                      <Text key={item} size="sm">
-                        {item}
-                      </Text>
-                    ))}
+                    <Text size="sm">No data yet</Text>
                   </div>
                 </Stack>
               </Card>
@@ -104,8 +148,8 @@ export function ProfessorClassDashboard() {
                   <Text c="dimmed" size="sm">
                     Running Containers
                   </Text>
-                  <Title order={1}>{metrics.runningContainers}</Title>
-                  <Text size="sm">Active grading sessions.</Text>
+                  <Title order={1}>0</Title>
+                  <Text size="sm">Phase 1 backend (no runs).</Text>
                 </Stack>
               </Card>
             </div>
@@ -131,7 +175,7 @@ export function ProfessorClassDashboard() {
                 </Button>
               </Group>
             </Group>
-            <div className="table-head table-head--prof">
+            <div className="table-head table-head--activities">
               <Text size="xs" c="dimmed">
                 Activity
               </Text>
@@ -141,26 +185,36 @@ export function ProfessorClassDashboard() {
               <Text size="xs" c="dimmed">
                 Submissions
               </Text>
-              <Text size="xs" c="dimmed">Health Avg</Text>
+              <Text size="xs" c="dimmed">Max Score</Text>
+              <Text size="xs" c="dimmed">Action</Text>
             </div>
             {filteredActivities.map((item) => (
-              <div key={item.id} className="table-row table-row--prof">
+              <div
+                key={item.id}
+                className="table-row table-row--activities"
+              >
                 <Text size="sm">{item.title}</Text>
                 <Text size="sm">{item.dueAt.slice(0, 10)}</Text>
                 <Badge color="brand" variant="light">
                   {item.submissionCount}
                 </Badge>
+                <Text size="sm">{item.maxScore}</Text>
                 <Button
                   size="xs"
                   variant="outline"
                   color="brand"
                   radius="lg"
-                  onClick={() => navigate(`/professor/class/${classInfo.id}/activities/${item.id}`)}
+                  onClick={() =>
+                    navigate(`/professor/class/${classId}/activities/${item.id}`)
+                  }
                 >
-                  Open Matrix
+                  Open
                 </Button>
               </div>
             ))}
+            <Group justify="flex-end" mt="md">
+              <Pagination total={1} size="sm" radius="md" />
+            </Group>
           </Tabs.Panel>
 
           <Tabs.Panel value="students" pt="md">
@@ -219,6 +273,9 @@ export function ProfessorClassDashboard() {
                 </Button>
               </div>
             ))}
+            <Group justify="flex-end" mt="md">
+              <Pagination total={1} size="sm" radius="md" />
+            </Group>
           </Tabs.Panel>
         </Tabs>
       </Card>
@@ -233,6 +290,12 @@ export function ProfessorClassDashboard() {
           <TextInput label="Title" placeholder="Week 6 Lab" radius="md" />
           <Textarea label="Description" placeholder="Brief assignment notes" radius="md" />
           <TextInput label="Due Date" placeholder="YYYY-MM-DD" radius="md" />
+          <NumberInput
+            label="Max Score / Total Points"
+            placeholder="100"
+            min={1}
+            radius="md"
+          />
           <Group justify="flex-end">
             <Button
               variant="outline"

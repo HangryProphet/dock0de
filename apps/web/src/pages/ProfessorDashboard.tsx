@@ -1,18 +1,38 @@
+import { useEffect, useState } from "react";
 import {
   Badge,
   Button,
   Card,
   Group,
+  Pagination,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
-import { mockData } from "../data/mockData";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import type { LayoutContext } from "../layouts/AppLayout";
+import { fetchProfessorClasses, fetchProfessorMetrics } from "../data/api";
+import type { ClassInfo, ProfessorMetrics } from "../data/api";
 
 export function ProfessorDashboard() {
   const navigate = useNavigate();
-  const classes = mockData.classes;
+  const { user } = useOutletContext<LayoutContext>();
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [metrics, setMetrics] = useState<ProfessorMetrics>({
+    activeClasses: 0,
+    submissionsNeedingReview: 0,
+    dockerEngineHealthy: true,
+  });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    fetchProfessorMetrics(user.id)
+      .then(setMetrics)
+      .catch(() => undefined);
+    fetchProfessorClasses(user.id)
+      .then(setClasses)
+      .catch(() => setClasses([]));
+  }, [user?.id]);
 
   return (
     <div className="page-grid">
@@ -21,7 +41,7 @@ export function ProfessorDashboard() {
           <Text c="dimmed" size="sm">
             Active Classes
           </Text>
-          <Title order={1}>{mockData.professorMetrics.activeClasses}</Title>
+          <Title order={1}>{metrics.activeClasses}</Title>
           <Text size="sm">Classes with active activities.</Text>
         </Stack>
       </Card>
@@ -35,7 +55,7 @@ export function ProfessorDashboard() {
               Urgent
             </Badge>
           </Group>
-          <Title order={1}>{mockData.professorMetrics.submissionsNeedingReview}</Title>
+          <Title order={1}>{metrics.submissionsNeedingReview}</Title>
           <Text size="sm">Prioritize high-risk runs.</Text>
         </Stack>
       </Card>
@@ -45,7 +65,7 @@ export function ProfessorDashboard() {
             System Status (Docker Engine)
           </Text>
           <Title order={1}>
-            {mockData.professorMetrics.dockerEngineHealthy ? "Healthy" : "Down"}
+            {metrics.dockerEngineHealthy ? "Healthy" : "Down"}
           </Title>
           <Text size="sm">Last check 30s ago.</Text>
         </Stack>
@@ -92,6 +112,9 @@ export function ProfessorDashboard() {
             </Button>
           </div>
         ))}
+        <Group justify="flex-end" mt="md">
+          <Pagination total={1} size="sm" radius="md" />
+        </Group>
       </Card>
     </div>
   );

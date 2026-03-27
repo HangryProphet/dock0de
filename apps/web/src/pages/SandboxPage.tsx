@@ -6,6 +6,7 @@ import {
   Card,
   FileInput,
   Group,
+  Pagination,
   Select,
   Text,
   TextInput,
@@ -28,7 +29,7 @@ export function SandboxPage() {
   const [environment, setEnvironment] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    return mockData.sandboxRuns.filter((item) => {
+    return mockData.sandboxRuns.filter((item) => item.isTestRun).filter((item) => {
       const matchesQuery =
         item.studentName.toLowerCase().includes(query.toLowerCase()) ||
         item.activityTitle.toLowerCase().includes(query.toLowerCase());
@@ -38,7 +39,7 @@ export function SandboxPage() {
   }, [query, status]);
 
   return (
-    <div className="page-grid">
+    <div className="page-grid sandbox-page">
       <Card withBorder radius="lg" className="table-card quick-test">
         <Group justify="space-between" align="center">
           <div>
@@ -135,6 +136,9 @@ export function SandboxPage() {
             </Button>
           </div>
         ))}
+        <Group justify="flex-end" mt="md">
+          <Pagination total={1} size="sm" radius="md" />
+        </Group>
       </Card>
     </div>
   );

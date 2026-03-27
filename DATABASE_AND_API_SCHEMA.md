@@ -115,7 +115,8 @@ model Activity {
   classId     String
   title       String
   description String?
-  dueAt       DateTime?
+  dueAt       DateTime
+  maxScore    Int      @default(100)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -127,7 +128,7 @@ model Submission {
   id                 String            @id @default(cuid())
   userId             String
   classId            String
-  activityId         String
+  activityId         String?
   environment        Environment
   status             SubmissionStatus  @default(PENDING)
   assignmentName     String
