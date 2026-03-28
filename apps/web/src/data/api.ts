@@ -18,8 +18,21 @@ export type YearLevel = "YEAR_1" | "YEAR_2" | "YEAR_3" | "YEAR_4";
 
 export type ProfessorMetrics = {
   activeClasses: number;
+  activeActivities: number;
   submissionsNeedingReview: number;
   dockerEngineHealthy: boolean;
+};
+
+export type ProfessorRecentSubmission = {
+  submissionId: string;
+  studentName: string;
+  activityId: string | null;
+  activityTitle: string;
+  classId: string;
+  className: string;
+  status: SubmissionStatus;
+  environment: Environment;
+  submittedAt: string;
 };
 
 export type ClassInfo = {
@@ -37,6 +50,7 @@ export type ActivityInfo = {
   id: string;
   classId: string;
   title: string;
+  description?: string | null;
   dueAt: string;
   maxScore: number;
   submissionCount: number;
@@ -121,6 +135,14 @@ export function fetchProfessorMetrics(professorId?: string) {
   return fetchJson<ProfessorMetrics>(`/professor/metrics${query}`);
 }
 
+export function fetchProfessorRecentSubmissions(professorId?: string, limit = 5) {
+  const params = new URLSearchParams();
+  if (professorId) params.set("professorId", professorId);
+  params.set("limit", String(limit));
+  const query = params.toString();
+  return fetchJson<ProfessorRecentSubmission[]>(`/professor/recent-submissions?${query}`);
+}
+
 export function fetchProfessorClasses(professorId?: string) {
   const query = professorId ? `?professorId=${encodeURIComponent(professorId)}` : "";
   return fetchJson<ClassInfo[]>(`/professor/classes${query}`);
@@ -128,6 +150,22 @@ export function fetchProfessorClasses(professorId?: string) {
 
 export function fetchClassActivities(classId: string) {
   return fetchJson<ActivityInfo[]>(`/professor/classes/${classId}/activities`);
+}
+
+export function createActivity(classId: string, data: { title: string; description?: string; dueAt: string; maxScore: number }) {
+  return fetchJson<ActivityInfo>(`/professor/classes/${classId}/activities`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateActivity(classId: string, activityId: string, data: { title: string; description?: string; dueAt: string; maxScore: number }) {
+  return fetchJson<ActivityInfo>(`/professor/classes/${classId}/activities/${activityId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 }
 
 export function fetchClassStudents(classId: string) {

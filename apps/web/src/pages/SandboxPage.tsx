@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Badge,
@@ -12,6 +13,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { mockData } from "../data/mockData";
 
 const statusColor: Record<string, string> = {
@@ -23,6 +25,7 @@ const statusColor: Record<string, string> = {
 
 export function SandboxPage() {
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 720px)");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -38,9 +41,28 @@ export function SandboxPage() {
     });
   }, [query, status]);
 
+  const headStyle: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, minmax(0, 1fr))",
+    gap: 12,
+    padding: "8px 0",
+    borderTop: "1px solid var(--border)",
+    color: "var(--text)",
+  };
+
+  const rowStyle: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "repeat(4, minmax(0, 1fr))",
+    gap: 12,
+    alignItems: "center",
+    padding: "12px 0",
+    borderTop: "1px solid var(--border)",
+    color: "var(--text)",
+  };
+
   return (
-    <div className="page-grid sandbox-page">
-      <Card withBorder radius="lg" className="table-card quick-test">
+    <div className="page-grid" style={{ color: "var(--text)" }}>
+      <Card withBorder radius="lg" className="table-card" style={{ background: "var(--surface)" }}>
         <Group justify="space-between" align="center">
           <div>
             <Title order={3}>Quick Test</Title>
@@ -48,7 +70,7 @@ export function SandboxPage() {
               Run a private sandbox test (excluded from metrics).
             </Text>
           </div>
-          <Group gap="sm" className="quick-test-controls">
+          <Group gap="sm" wrap="wrap">
             <FileInput
               placeholder="Select .zip"
               value={file}
@@ -99,7 +121,7 @@ export function SandboxPage() {
             />
           </Group>
         </Group>
-        <div className="table-head table-head--prof">
+        <div style={headStyle}>
           <Text size="xs" c="dimmed">
             Student
           </Text>
@@ -114,7 +136,7 @@ export function SandboxPage() {
           </Text>
         </div>
         {filtered.map((item) => (
-          <div key={item.id} className="table-row table-row--prof">
+          <div key={item.id} style={rowStyle}>
             <Text size="sm">{item.studentName}</Text>
             <div>
               <Text size="sm">{item.activityTitle}</Text>
@@ -125,15 +147,17 @@ export function SandboxPage() {
             <Badge color={statusColor[item.status] ?? "gray"} variant="light">
               {item.status}
             </Badge>
-            <Button
-              size="xs"
-              variant="outline"
-              color="brand"
-              radius="lg"
-              onClick={() => navigate(`/dock/${item.submissionId}`)}
-            >
-              Open Dock
-            </Button>
+            <div>
+              <Button
+                size="xs"
+                variant="outline"
+                color="brand"
+                radius="lg"
+                onClick={() => navigate(`/dock/${item.submissionId}`)}
+              >
+                Open Dock
+              </Button>
+            </div>
           </div>
         ))}
         <Group justify="flex-end" mt="md">

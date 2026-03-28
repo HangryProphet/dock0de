@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import {
   Badge,
@@ -28,6 +29,8 @@ const statusColor: Record<string, string> = {
 
 export function StudentDashboard() {
   const navigate = useNavigate();
+  const themeMode =
+    (typeof document !== "undefined" && document.body?.dataset?.theme) || "default";
   const { user } = useOutletContext<LayoutContext>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [classes, setClasses] = useState<ClassInfo[]>([]);
@@ -63,6 +66,50 @@ export function StudentDashboard() {
     [timeline]
   );
 
+  const classGridStyle: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: 16,
+  };
+
+  const classCardStyle = (active: boolean): CSSProperties => ({
+    background: active ? "var(--accent-subtle)" : "var(--surface)",
+    border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+    borderRadius: 14,
+    padding: 16,
+    textAlign: "left",
+    cursor: "pointer",
+    display: "grid",
+    gap: 6,
+    backdropFilter: themeMode === "glass" ? "blur(16px)" : undefined,
+  });
+
+  const timelineStyle: CSSProperties = {
+    display: "grid",
+    gap: 12,
+  };
+
+  const timelineItemStyle: CSSProperties = {
+    borderTop: "1px solid var(--border)",
+    paddingTop: 12,
+    display: "grid",
+    gap: 8,
+  };
+
+  const timelineMetaStyle: CSSProperties = {
+    display: "grid",
+    gap: 6,
+  };
+
+  const submitBannerStyle: CSSProperties = {
+    background: "var(--surface-alt)",
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    padding: 12,
+    display: "grid",
+    gap: 4,
+  };
+
   return (
     <div className="page-grid">
       <Card withBorder radius="lg" className="table-card">
@@ -77,11 +124,11 @@ export function StudentDashboard() {
             Join Class
           </Button>
         </Group>
-        <div className="class-grid">
+        <div style={classGridStyle}>
           {classes.map((item) => (
             <button
               key={item.id}
-              className={`class-card${item.id === selectedClassId ? " is-active" : ""}`}
+              style={classCardStyle(item.id === selectedClassId)}
               onClick={() => setSearchParams({ classId: item.id })}
             >
               <Text size="xs" c="dimmed">
@@ -108,16 +155,16 @@ export function StudentDashboard() {
             {pendingGrades} pending grades
           </Badge>
         </Group>
-        <div className="timeline">
+        <div style={timelineStyle}>
           {timeline.map((item) => (
-            <div key={item.id} className="timeline-item">
+            <div key={item.id} style={timelineItemStyle}>
               <div>
                 <Text fw={600}>{item.title}</Text>
                 <Text size="xs" c="dimmed">
                   Due {item.dueAt.slice(0, 10)}
                 </Text>
               </div>
-              <div className="timeline-meta">
+              <div style={timelineMetaStyle}>
                 <Badge color={statusColor[item.status] ?? "gray"} variant="light">
                   {item.status}
                 </Badge>
@@ -129,28 +176,32 @@ export function StudentDashboard() {
                     {item.professorComment}
                   </Text>
                 )}
-                <Button
-                  size="xs"
-                  variant="outline"
-                  color="brand"
-                  radius="lg"
-                  onClick={() => {
-                    setSubmitActivity(item.activityId);
-                    setSubmitOpen(true);
-                  }}
-                >
-                  Submit Work
-                </Button>
-                {item.submissionId && (
+                <div>
                   <Button
                     size="xs"
                     variant="outline"
                     color="brand"
                     radius="lg"
-                    onClick={() => navigate(`/dock/${item.submissionId}`)}
+                    onClick={() => {
+                      setSubmitActivity(item.activityId);
+                      setSubmitOpen(true);
+                    }}
                   >
-                    Open Dock
+                    Submit Work
                   </Button>
+                </div>
+                {item.submissionId && (
+                  <div>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      color="brand"
+                      radius="lg"
+                      onClick={() => navigate(`/dock/${item.submissionId}`)}
+                    >
+                      Open Dock
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -165,7 +216,7 @@ export function StudentDashboard() {
         centered
       >
         <Stack gap="sm">
-          <div className="submit-banner">
+          <div style={submitBannerStyle}>
             <Text size="xs" c="dimmed">
               Class
             </Text>

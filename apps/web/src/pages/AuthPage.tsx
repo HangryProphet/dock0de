@@ -1,4 +1,4 @@
-import { Button, Card, Text, Title } from "@mantine/core";
+import { Button, Card, Center, Group, Text, Title } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 
 export function AuthPage() {
@@ -9,8 +9,8 @@ export function AuthPage() {
   };
 
   return (
-    <div className="auth-shell">
-      <Card withBorder radius="lg" className="auth-card">
+    <Center mih="100svh" p={24}>
+      <Card withBorder radius="lg" w="min(480px, 90vw)" p={24}>
         <Title order={2} mb="sm">
           Dock0de Preview Access
         </Title>
@@ -20,12 +20,12 @@ export function AuthPage() {
         <Button color="brand" radius="lg" fullWidth onClick={handleContinue}>
           Enter Dashboard
         </Button>
-        <div className="auth-links">
+        <Group justify="space-between" mt={16}>
           <Text size="xs" c="dimmed">
             No account required for demo.
           </Text>
-        </div>
+        </Group>
       </Card>
-    </div>
+    </Center>
   );
 }

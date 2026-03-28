@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   Button,
   Card,
@@ -41,15 +42,46 @@ export function UploadPage() {
     setFile(selected);
   };
 
+  const shellStyle: CSSProperties = {
+    minHeight: "70vh",
+    display: "grid",
+    placeItems: "center",
+  };
+
+  const cardStyle: CSSProperties = {
+    width: "min(680px, 94vw)",
+    padding: 24,
+  };
+
+  const dropzoneStyle: CSSProperties = {
+    border: `1px dashed ${dragActive ? "var(--accent)" : "var(--border)"}`,
+    borderRadius: 16,
+    padding: 28,
+    display: "grid",
+    gap: 6,
+    placeItems: "center",
+    textAlign: "center",
+    background: dragActive ? "var(--accent-subtle)" : "var(--surface)",
+    position: "relative",
+    overflow: "hidden",
+  };
+
+  const dropzoneInputStyle: CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    opacity: 0,
+    cursor: "pointer",
+  };
+
   return (
-    <div className="upload-shell">
-      <Card withBorder radius="lg" className="upload-card">
+    <div style={shellStyle}>
+      <Card withBorder radius="lg" style={cardStyle}>
         <Title order={2}>Upload Submission</Title>
         <Text c="dimmed" size="sm" mb="lg">
           Drag and drop your .zip file to start a new run.
         </Text>
         <div
-          className={`dropzone${dragActive ? " dropzone--active" : ""}`}
+          style={dropzoneStyle}
           onDragOver={(event) => {
             event.preventDefault();
             setDragActive(true);
@@ -63,7 +95,7 @@ export function UploadPage() {
           }}
         >
           <input
-            className="dropzone-input"
+            style={dropzoneInputStyle}
             type="file"
             accept=".zip"
             onChange={(event) => handleFile(event.currentTarget.files?.[0] ?? null)}

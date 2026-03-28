@@ -7,6 +7,7 @@ Dock0de is a class- and activity-based code execution sandbox for IT professors.
 ### Frontend (Mandatory)
 - React + Vite + TypeScript
 - UI: Mantine (fast to ship, good defaults, free)
+- Styling Strict Rules: Tailwind has been removed. UI relies on strict Mantine properties, `useMediaQuery` for responsiveness, and TSX `React.CSSProperties` objects. Avoid global `.css` files.
 - State/Data: TanStack Query + Zustand
 - Networking: native fetch + SSE for log streaming
 

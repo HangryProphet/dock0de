@@ -1,6 +1,6 @@
 # Dock0de Page Specifications
 
-This document references the design tokens and layout rules in UI_UX_GUIDE.md and the system flow in ARCHITECTURE.md. All pages use Manrope, 1px borders, 12-14px radii, and the bento-grid layout style.
+This document references the design tokens and layout rules in UI_UX_GUIDE.md and the system flow in ARCHITECTURE.md. All pages use Manrope, 1px borders, 12-14px radii, and the bento-grid layout style using inline `React.CSSProperties` arrays to maintain pure component files without rely of external class injections.
 
 ## 1. Auth Gateway (/auth)
 Visual Layout
@@ -88,7 +88,7 @@ Visual Layout
 
 Core Components
 - Search bar, status filter, date range filter.
-- Activity list rows with "Open Matrix" button.
+- Activity list rows with isolated "Open Matrix" button components (wrapped in parent `<div>` to avoid grid stretching).
 
 Interaction Logic
 - "Open Matrix" navigates to /professor/class/:id/activities/:activityId.

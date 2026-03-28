@@ -171,6 +171,12 @@ app.get("/professor/metrics", async (request) => {
   });
   const ids = classIds.map((item) => item.id);
   const activeClasses = ids.length;
+  const activeActivities = await prisma.activity.count({
+    where: {
+      classId: ids.length ? { in: ids } : undefined,
+      dueAt: { gte: new Date() },
+    },
+  });
   const submissionsNeedingReview = await prisma.submission.count({
     where: {
       classId: ids.length ? { in: ids } : undefined,
@@ -180,9 +186,51 @@ app.get("/professor/metrics", async (request) => {
   });
   return {
     activeClasses,
+    activeActivities,
     submissionsNeedingReview,
     dockerEngineHealthy: true,
   };
+});
+
+app.get("/professor/recent-submissions", async (request) => {
+  const query = request.query as { professorId?: string; limit?: string | number };
+  const professorId = query.professorId;
+  const parsedLimit = Number(query.limit ?? 5);
+  const limit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(Math.trunc(parsedLimit), 1), 12)
+    : 5;
+
+  const classIds = await prisma.class.findMany({
+    where: professorId ? { professorId } : undefined,
+    select: { id: true },
+  });
+  const ids = classIds.map((item) => item.id);
+
+  const recent = await prisma.submission.findMany({
+    where: {
+      classId: ids.length ? { in: ids } : undefined,
+      isTestRun: false,
+    },
+    include: {
+      user: { select: { displayName: true } },
+      activity: { select: { id: true, title: true } },
+      class: { select: { id: true, name: true, section: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+
+  return recent.map((entry) => ({
+    submissionId: entry.id,
+    studentName: entry.user.displayName,
+    activityId: entry.activity?.id ?? null,
+    activityTitle: entry.activity?.title ?? entry.assignmentName,
+    classId: entry.class.id,
+    className: `${entry.class.name} ${entry.class.section}`,
+    status: entry.status,
+    environment: entry.environment,
+    submittedAt: entry.createdAt.toISOString(),
+  }));
 });
 
 app.get("/professor/classes", async (request) => {
@@ -234,12 +282,75 @@ app.get("/professor/classes/:id/activities", async (request) => {
       id: activity.id,
       classId: activity.classId,
       title: activity.title,
+      description: activity.description,
       dueAt: activity.dueAt.toISOString(),
       maxScore: activity.maxScore,
       submissionCount: summary?._count.activityId ?? 0,
       healthAvg: summary?._avg.healthScore ? Math.round(summary._avg.healthScore) : 0,
     };
   });
+});
+
+app.post("/professor/classes/:id/activities", async (request, reply) => {
+  const classId = (request.params as { id: string }).id;
+  const body = request.body as { title: string; description?: string; dueAt: string; maxScore: number };
+  
+  if (!body.title || !body.dueAt || body.maxScore == null) {
+    return reply.status(400).send({ error: "Missing required fields" });
+  }
+
+  const newActivity = await prisma.activity.create({
+    data: {
+      title: body.title,
+      description: body.description,
+      dueAt: new Date(body.dueAt),
+      maxScore: body.maxScore,
+      classId,
+    }
+  });
+
+  return {
+    id: newActivity.id,
+    classId: newActivity.classId,
+    title: newActivity.title,
+    description: newActivity.description,
+    dueAt: newActivity.dueAt.toISOString(),
+    maxScore: newActivity.maxScore,
+    submissionCount: 0,
+    healthAvg: 0,
+  };
+});
+
+app.put("/professor/classes/:id/activities/:activityId", async (request, reply) => {
+  const { id: classId, activityId } = request.params as { id: string; activityId: string };
+  const body = request.body as { title: string; description?: string; dueAt: string; maxScore: number };
+  
+  if (!body.title || !body.dueAt || body.maxScore == null) {
+    return reply.status(400).send({ error: "Missing required fields" });
+  }
+
+  const updatedActivity = await prisma.activity.update({
+    where: { id: activityId },
+    data: {
+      title: body.title,
+      description: body.description,
+      dueAt: new Date(body.dueAt),
+      maxScore: body.maxScore,
+    }
+  });
+
+  const count = await prisma.submission.count({ where: { activityId, isTestRun: false } });
+  
+  return {
+    id: updatedActivity.id,
+    classId: updatedActivity.classId,
+    title: updatedActivity.title,
+    description: updatedActivity.description,
+    dueAt: updatedActivity.dueAt.toISOString(),
+    maxScore: updatedActivity.maxScore,
+    submissionCount: count,
+    healthAvg: 0,
+  };
 });
 
 app.get("/professor/classes/:id/students", async (request) => {

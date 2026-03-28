@@ -149,6 +149,11 @@ Sandbox (Professor Quick Access)
 - Keep layout compact to reduce friction.
 
 ## Component Rules
+
+Branding / Logo (Landing Page)
+- "DOCK0DE" logo badge rendered as text, enclosed in a rounded glass pill (radius: 999px) with translucent borders (e.g. `rgba(255, 255, 255, 0.15)`).
+- Heavy font weight (900) to ensure emphasis without relying on flashy gradients.
+
 Cards
 - Background: Surface, border 1px solid Border.
 - Radius: 14px.
@@ -159,7 +164,7 @@ Buttons
 - Primary: Accent background, white text, 12px radius.
 - Secondary: Surface with 1px border and Text Primary.
 - Ghost: transparent, Text Secondary, hover uses Surface Alt.
-- Height: 36px, font 14px, weight 600.
+- Height: Controlled by Mantine sizing props (e.g., `size="sm"` or `size="xs"` for inline table buttons) avoiding wide unconstrained default configurations. Height around 36px, font 14px, weight 600.
 
 Inputs
 - Background: Surface, border 1px solid Border.
@@ -188,7 +193,11 @@ Badges
 - Simple line icons (1.5px stroke).
 - Use consistent size: 18-20px.
 
-## Implementation Notes (Mantine + Tailwind)
-- Use CSS variables for palette to keep theme consistent.
+## Implementation Notes (Strict Mantine + Inline TSX Styles)
+- Tailwind CSS has been fully removed. No global utility classes should be used.
+- Responsiveness is handled via Mantine's `useMediaQuery` hook alongside inline `React.CSSProperties` objects.
+- Action buttons inside CSS Grids are wrapped in `<div>` blocks to prevent standard grid auto-stretching.
+- Landing page branding explicitly utilizes `padding`, `border-radius: 999px`, and `background: rgba()` for dynamic glass badges. 
 - Keep components flat; remove default shadows.
-- Enforce consistent radius and border tokens.
+- Enforce consistent radius and border tokens via Mantine props (`radius="lg"`, etc.).
+- Use standard CSS variables (`var(--surface)`, `var(--text)`) to maintain theme consistencies.

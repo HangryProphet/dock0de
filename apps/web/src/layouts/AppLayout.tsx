@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { PropsWithChildren } from "react";
+import type { CSSProperties, PropsWithChildren } from "react";
 import { Outlet } from "react-router-dom";
 import {
   Avatar,
@@ -9,6 +9,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { Sidebar } from "../components/Sidebar";
 import { login } from "../data/api";
 import type { UserInfo, UserRole } from "../data/api";
@@ -18,15 +19,20 @@ export type LayoutContext = {
   user: UserInfo | null;
 };
 
-type ThemeMode = "default" | "cyber" | "glass" | "command";
+type ThemeMode = "default" | "cyber" | "glass";
 
 export function AppLayout({ children }: PropsWithChildren) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [role, setRole] = useState<UserRole>("PROFESSOR");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isTablet = useMediaQuery("(max-width: 1100px)");
+  const isMobile = useMediaQuery("(max-width: 720px)");
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem("dock0de-theme");
-    return (saved as ThemeMode) ?? "default";
+    if (saved === "default" || saved === "cyber" || saved === "glass") {
+      return saved;
+    }
+    return "default";
   });
 
   useEffect(() => {
@@ -52,16 +58,50 @@ export function AppLayout({ children }: PropsWithChildren) {
       });
   }, [role]);
 
+  const shellStyle: CSSProperties = {
+    minHeight: "100svh",
+    display: "grid",
+    gridTemplateColumns: isTablet
+      ? "1fr"
+      : sidebarCollapsed
+      ? "72px minmax(0, 1fr)"
+      : "240px minmax(0, 1fr)",
+  };
+
+  const contentStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100svh",
+  };
+
+  const headerStyle: CSSProperties = {
+    height: isMobile ? "auto" : 72,
+    padding: "16px 24px",
+    display: "flex",
+    alignItems: isMobile ? "flex-start" : "center",
+    justifyContent: "space-between",
+    flexDirection: isMobile ? "column" : "row",
+    gap: isMobile ? 12 : 0,
+    borderBottom: "1px solid var(--border)",
+    background: "var(--surface)",
+    backdropFilter: theme === "glass" ? "blur(16px)" : undefined,
+  };
+
+  const mainStyle: CSSProperties = {
+    padding: 24,
+  };
+
   return (
-    <div className={`layout-shell${sidebarCollapsed ? " is-collapsed" : ""}`}>
+    <div style={shellStyle}>
       <Sidebar
         role={role}
         userId={user?.id}
         collapsed={sidebarCollapsed}
+        theme={theme}
         onToggleCollapse={() => setSidebarCollapsed((value) => !value)}
       />
-      <div className="layout-content">
-        <header className="layout-header">
+      <div style={contentStyle}>
+        <header style={headerStyle}>
           <div>
             <Title order={3}>Dock0de</Title>
             <Text c="dimmed" size="sm">
@@ -72,7 +112,7 @@ export function AppLayout({ children }: PropsWithChildren) {
             <TextInput
               placeholder="Search submissions"
               radius="md"
-              className="header-search"
+              style={{ minWidth: isMobile ? undefined : 220 }}
             />
             <SegmentedControl
               size="xs"
@@ -82,7 +122,6 @@ export function AppLayout({ children }: PropsWithChildren) {
                 { label: "Default", value: "default" },
                 { label: "Cyber", value: "cyber" },
                 { label: "Glass", value: "glass" },
-                { label: "Command", value: "command" },
               ]}
             />
             <SegmentedControl
@@ -109,7 +148,7 @@ export function AppLayout({ children }: PropsWithChildren) {
             </Group>
           </Group>
         </header>
-        <main className="layout-main">
+        <main style={mainStyle}>
           {children ?? <Outlet context={{ role, user }} />}
         </main>
       </div>
